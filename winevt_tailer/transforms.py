@@ -1,9 +1,13 @@
+import re
 import lxml
 from lxml import etree
 import win32evtlog
 import winevt_tailer.consts as const
 
 g_xml_to_json_xform = lxml.etree.XSLT(lxml.etree.fromstring(const.XSLT_XML_TO_JSON))
+
+# characters that are not allowed in XML 1.0 text (control chars, lone surrogates, U+FFFE/U+FFFF)
+g_xml_illegal_chars = re.compile('[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]')
 
 g_event_ns = {'event': 'http://schemas.microsoft.com/win/2004/08/events/event'}
 
@@ -63,7 +67,7 @@ def xml_render_message(context: dict, event_h, event_obj: object) -> object:
             pass
         else:
             sub = lxml.etree.SubElement(event_obj, 'Message')
-            sub.text = message
+            sub.text = g_xml_illegal_chars.sub('\ufffd', message)
     return event_obj
 
 

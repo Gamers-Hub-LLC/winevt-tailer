@@ -158,7 +158,14 @@ class Tailer:
                 if len(events) == 0:
                     break
                 for event_h in events:
-                    if self.handle_event(ch_idx, event_h):  # False means event was ignored
+                    try:
+                        handled = self.handle_event(ch_idx, event_h)  # False means event was ignored
+                    except Exception:
+                        # One malformed event must never take the whole tailer (and the agent) down.
+                        # Log it, skip it and let the bookmark advance so it is not replayed on restart.
+                        self.log.exception("failed to handle event, skipping it")
+                        handled = True
+                    if handled:
                         last_event_h = event_h
                 del events
             if last_event_h:  # last event if any
@@ -189,7 +196,14 @@ class Tailer:
                 if len(events) == 0 or self.is_stop:
                     break
                 for event_h in events:
-                    if self.handle_event(ch_idx, event_h):  # False means event was ignored
+                    try:
+                        handled = self.handle_event(ch_idx, event_h)  # False means event was ignored
+                    except Exception:
+                        # One malformed event must never take the whole tailer (and the agent) down.
+                        # Log it, skip it and let the bookmark advance so it is not replayed on restart.
+                        self.log.exception("failed to handle event, skipping it")
+                        handled = True
+                    if handled:
                         last_event_h = event_h
                 del events
             if last_event_h:  # update bookmark from last event if any

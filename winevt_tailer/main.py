@@ -13,6 +13,10 @@ from winevt_tailer.tailer import Tailer
 
 
 def main(argv: dict = None) -> int:
+    # events are JSON with arbitrary unicode (e.g. U+200E); never let the legacy console codepage drop them
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8', errors='replace')
     args = opts.parse_cmd_args(argv)
     assert args.name
     tailer_name = args.name

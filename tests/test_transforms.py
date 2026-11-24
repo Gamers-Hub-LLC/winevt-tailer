@@ -43,3 +43,25 @@ def test_xml_to_json():
     json_str: str = transforms.xml_to_json({}, None, event_obj)
     json.loads(json_str)
     assert json_str.find('\n') == -1
+
+def test_xml_render_message_strips_xml_illegal_chars(monkeypatch):
+    """Event text with NULL/control chars must not raise ValueError in lxml (it used to kill the tailer)"""
+    class FakeEvt:
+        EvtFormatMessageEvent = 1
+
+        @staticmethod
+        def EvtOpenPublisherMetadata(name):
+            return object()
+
+        @staticmethod
+        def EvtFormatMessage(metadata, event_h, flag):
+            return 'bad\x00 control\x1f \u200e ok'
+
+    monkeypatch.setattr(transforms, 'win32evtlog', FakeEvt)
+    event_obj = lxml.etree.fromstring(
+        '<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">'
+        '<System><Provider Name="X"/></System></Event>')
+    result = transforms.xml_render_message({}, None, event_obj)
+    msg = result.find('Message').text
+    assert '\x00' not in msg and '\x1f' not in msg
+    assert '\u200e' in msg and msg.endswith('ok')
