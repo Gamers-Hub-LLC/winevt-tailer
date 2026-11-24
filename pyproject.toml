@@ -19,7 +19,7 @@ commit_author = "LogDNA Bot <bot@logdna.com>"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"
 pywin32 = "^304"
-lxml = "^4.9.1"
+lxml = ">=4.9.1,<7.0.0"
 PyYAML = "^6.0"
 pydantic = "^1.10.2"
 single-source = "^0.3.0"
